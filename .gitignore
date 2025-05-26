@@ -29,4 +29,12 @@ coverage
 
 # OS
 .DS_Store
-Thumbs.db 
+Thumbs.db
+
+# Database
+database.sqlite
+*.sqlite
+*.db
+
+# Vercel
+.vercel 
