@@ -72,6 +72,16 @@ jobs:
       run: |
         python test_setup.py
         
+    - name: Check email secrets configuration
+      env:
+        RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        EMAIL_USER: ${{ secrets.EMAIL_USER }}
+        EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+        SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+        SMTP_PORT: ${{ secrets.SMTP_PORT }}
+      run: |
+        python check_secrets.py
+        
     - name: Run AI News Digest
       env:
         RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
