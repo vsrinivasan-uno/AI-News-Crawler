@@ -453,17 +453,20 @@ class ScraperService:
         try:
             import praw
             
-            # Initialize Reddit API client (read-only, no authentication needed)
-            reddit = praw.Reddit(
-                client_id="your_client_id",  # Will be set via environment variable
-                client_secret="your_client_secret",  # Will be set via environment variable  
-                user_agent="AI News Crawler v2.0 by /u/YourUsername"
-            )
+            # Get Reddit API credentials and clean them
+            reddit_client_id = os.getenv('REDDIT_CLIENT_ID', '').strip()
+            reddit_client_secret = os.getenv('REDDIT_CLIENT_SECRET', '').strip()
+            reddit_user_agent = os.getenv('REDDIT_USER_AGENT', 'AI News Crawler v2.0').strip()
             
-            # If no API credentials, try anonymous/public access
-            reddit_client_id = os.getenv('REDDIT_CLIENT_ID')
-            reddit_client_secret = os.getenv('REDDIT_CLIENT_SECRET')
-            reddit_user_agent = os.getenv('REDDIT_USER_AGENT', 'AI News Crawler v2.0')
+            # Validate and clean user agent (remove invalid characters for HTTP headers)
+            if reddit_user_agent:
+                # Remove any leading/trailing whitespace and invalid characters
+                reddit_user_agent = re.sub(r'[^\x20-\x7E]', '', reddit_user_agent)  # Keep only printable ASCII
+                reddit_user_agent = reddit_user_agent.strip()
+                if not reddit_user_agent:
+                    reddit_user_agent = 'AI News Crawler v2.0'
+            else:
+                reddit_user_agent = 'AI News Crawler v2.0'
             
             if reddit_client_id and reddit_client_secret:
                 logger.info("Using Reddit API with credentials")
@@ -472,6 +475,18 @@ class ScraperService:
                     client_secret=reddit_client_secret,
                     user_agent=reddit_user_agent
                 )
+                
+                # Test the connection by making a simple request
+                try:
+                    # Test by accessing a known subreddit
+                    test_sub = reddit.subreddit('test')
+                    _ = test_sub.display_name  # This will trigger an API call
+                    logger.info("Reddit API connection test successful")
+                except Exception as api_test_error:
+                    logger.warning(f"Reddit API test failed: {api_test_error}")
+                    logger.info("Falling back to RSS feeds due to API connection issue")
+                    return self.scrape_reddit_rss()
+                    
             else:
                 logger.info("Reddit API credentials not found, falling back to RSS feeds")
                 return self.scrape_reddit_rss()
