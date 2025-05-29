@@ -85,7 +85,9 @@ class EmailService:
     def send_email_via_resend(self, to_emails: List[str], subject: str, html_content: str) -> bool:
         """Send email using Resend API"""
         if not self.resend_api_key:
-            logger.error("RESEND_API_KEY not configured")
+            logger.error("RESEND_API_KEY not found in environment variables")
+            logger.error("Please add RESEND_API_KEY to your GitHub repository secrets")
+            logger.error("Get a free API key from: https://resend.com")
             return False
             
         try:
@@ -112,9 +114,9 @@ class EmailService:
                 response = requests.post(url, headers=headers, json=payload)
                 
                 if response.status_code == 200:
-                    logger.info(f"Email sent successfully to {len(batch)} recipients")
+                    logger.info(f"Email sent successfully to {len(batch)} recipients via Resend")
                 else:
-                    logger.error(f"Failed to send email batch: {response.status_code} - {response.text}")
+                    logger.error(f"Resend API error: {response.status_code} - {response.text}")
                     return False
                     
             return True
@@ -127,6 +129,9 @@ class EmailService:
         """Send email using SMTP"""
         if not self.email_user or not self.email_password:
             logger.error("SMTP credentials not configured")
+            logger.error("Either set RESEND_API_KEY (recommended) or configure SMTP:")
+            logger.error("- EMAIL_USER: Your email address")  
+            logger.error("- EMAIL_PASSWORD: Your email password/app password")
             return False
             
         try:
@@ -154,9 +159,16 @@ class EmailService:
     
     def send_email(self, to_emails: List[str], subject: str, html_content: str) -> bool:
         """Send email using available method"""
+        logger.info(f"🔍 Email configuration check:")
+        logger.info(f"   - RESEND_API_KEY: {'✅ Found' if self.resend_api_key else '❌ Not found'}")
+        logger.info(f"   - EMAIL_USER: {'✅ Found' if self.email_user else '❌ Not found'}")
+        logger.info(f"   - EMAIL_PASSWORD: {'✅ Found' if self.email_password else '❌ Not found'}")
+        
         if self.resend_api_key:
+            logger.info("📧 Attempting to send via Resend API...")
             return self.send_email_via_resend(to_emails, subject, html_content)
         else:
+            logger.info("📧 Attempting to send via SMTP (fallback)...")
             return self.send_email_via_smtp(to_emails, subject, html_content)
     
     def format_digest_email(self, content: Dict[str, List[NewsItem]]) -> str:
