@@ -1,0 +1,92 @@
+name: AI News Daily Digest
+
+on:
+  # Schedule for 10 AM Omaha time (Central Time)
+  # 15:00 UTC = 10:00 AM CDT (Daylight Time - March to November)
+  # 16:00 UTC = 10:00 AM CST (Standard Time - November to March)
+  # Using 15:00 UTC to cover most of the year (daylight time)
+  schedule:
+    - cron: '0 15 * * *'  # Daily at 3 PM UTC (10 AM CDT)
+  
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      test_mode:
+        description: 'Run in test mode'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  send-digest:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wget unzip
+        
+        # Install Chrome for Selenium
+        wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+        echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+        sudo apt-get update
+        sudo apt-get install -y google-chrome-stable
+        
+        # Install ChromeDriver
+        CHROME_VERSION=$(google-chrome --version | cut -d ' ' -f3 | cut -d '.' -f1)
+        CHROMEDRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION")
+        wget -O /tmp/chromedriver.zip "https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip"
+        sudo unzip /tmp/chromedriver.zip -d /usr/local/bin/
+        sudo chmod +x /usr/local/bin/chromedriver
+        
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Verify setup
+      run: |
+        python test_setup.py
+        
+    - name: Run AI News Digest
+      env:
+        RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        EMAIL_USER: ${{ secrets.EMAIL_USER }}
+        EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+        SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+        SMTP_PORT: ${{ secrets.SMTP_PORT }}
+      run: |
+        if [ "${{ github.event.inputs.test_mode }}" = "true" ]; then
+          echo "Running in test mode..."
+          python main.py test
+        else
+          echo "Running normal digest..."
+          python main.py
+        fi
+        
+    - name: Upload logs as artifact
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: ai-news-logs-${{ github.run_number }}
+        path: |
+          ai_news_crawler.log
+          ai_news_crawler.db
+        retention-days: 7 
