@@ -1,0 +1,45 @@
+# AI News Crawler - Environment Configuration
+# Copy this file to .env and fill in your actual values
+
+# ================================
+# EMAIL CONFIGURATION (Choose One)
+# ================================
+
+# Option 1: Resend API (Recommended)
+# Sign up at https://resend.com and get your API key
+RESEND_API_KEY=your_resend_api_key_here
+
+# Option 2: SMTP Configuration (Fallback)
+# Use these if you don't have Resend API key
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASSWORD=your_app_password_here
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
+
+# ================================
+# OPTIONAL CONFIGURATIONS
+# ================================
+
+# Browser Settings (for Selenium if needed)
+SELENIUM_HEADLESS=true
+SELENIUM_TIMEOUT=30
+
+# Logging Level (DEBUG, INFO, WARNING, ERROR)
+LOG_LEVEL=INFO
+
+# Database Path (optional)
+DATABASE_PATH=ai_news_crawler.db
+
+# ================================
+# NOTES
+# ================================
+
+# For Gmail SMTP:
+# 1. Enable 2-factor authentication
+# 2. Generate an App Password
+# 3. Use the App Password (not your regular password)
+
+# For Resend API:
+# 1. Sign up at resend.com
+# 2. Verify your domain (or use their test domain)
+# 3. Get your API key from the dashboard 
