@@ -105,7 +105,7 @@ class EmailService:
                 batch = to_emails[i:i + batch_size]
                 
                 payload = {
-                    "from": "Vishva's AI Digest <Vishva@Luke.ai>",
+                    "from": "Vishva's AI Digest <VishvaLuke@resend.dev>",
                     "to": batch,
                     "subject": subject,
                     "html": html_content
