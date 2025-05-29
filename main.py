@@ -71,11 +71,16 @@ class EmailService:
     """Service for sending emails"""
     
     def __init__(self):
-        self.resend_api_key = os.getenv('RESEND_API_KEY')
-        self.smtp_server = os.getenv('SMTP_SERVER', 'smtp.gmail.com')
-        self.smtp_port = int(os.getenv('SMTP_PORT', '587'))
-        self.email_user = os.getenv('EMAIL_USER')
-        self.email_password = os.getenv('EMAIL_PASSWORD')
+        # Handle environment variables with proper fallback for empty strings
+        self.resend_api_key = os.getenv('RESEND_API_KEY') or None
+        self.smtp_server = os.getenv('SMTP_SERVER') or 'smtp.gmail.com'
+        
+        # Handle SMTP_PORT with proper fallback for empty strings
+        smtp_port_str = os.getenv('SMTP_PORT', '587')
+        self.smtp_port = int(smtp_port_str) if smtp_port_str and smtp_port_str.strip() else 587
+        
+        self.email_user = os.getenv('EMAIL_USER') or None
+        self.email_password = os.getenv('EMAIL_PASSWORD') or None
         
     def send_email_via_resend(self, to_emails: List[str], subject: str, html_content: str) -> bool:
         """Send email using Resend API"""
