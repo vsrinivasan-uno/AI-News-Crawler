@@ -340,8 +340,15 @@ class ScraperService:
     
     def __init__(self):
         self.session = requests.Session()
+        # Improved headers to avoid Reddit blocking
         self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'application/json, text/plain, */*',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'DNT': '1',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
         })
         self.driver = None
         
@@ -450,7 +457,10 @@ class ScraperService:
                 logger.info(f"Scraping r/{subreddit['name']}...")
                 url = f"https://www.reddit.com/r/{subreddit['name']}/hot.json"
                 
-                response = self.session.get(url)
+                # Add rate limiting to avoid being blocked
+                time.sleep(1)  # Wait 1 second between requests
+                
+                response = self.session.get(url, timeout=10)
                 response.raise_for_status()
                 data = response.json()
                 
@@ -487,8 +497,15 @@ class ScraperService:
                     results.extend(posts)
                     logger.info(f"Found {len(posts)} significant posts from today in r/{subreddit['name']}")
                     
+            except requests.exceptions.HTTPError as e:
+                if e.response.status_code == 403:
+                    logger.warning(f"Reddit blocked access to r/{subreddit['name']} (403). This is common and not critical.")
+                else:
+                    logger.error(f"HTTP error scraping r/{subreddit['name']}: {e}")
+            except requests.exceptions.RequestException as e:
+                logger.error(f"Network error scraping r/{subreddit['name']}: {e}")
             except Exception as e:
-                logger.error(f"Error scraping r/{subreddit['name']}: {e}")
+                logger.error(f"Unexpected error scraping r/{subreddit['name']}: {e}")
         
         # Sort by engagement and return top 15
         results.sort(key=lambda x: x.engagement, reverse=True)
