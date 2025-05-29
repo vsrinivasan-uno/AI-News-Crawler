@@ -49,6 +49,31 @@ def check_secrets():
     
     print()
     
+    # Check Reddit API secrets
+    reddit_secrets = {
+        'REDDIT_CLIENT_ID': os.getenv('REDDIT_CLIENT_ID'),
+        'REDDIT_CLIENT_SECRET': os.getenv('REDDIT_CLIENT_SECRET'),
+        'REDDIT_USER_AGENT': os.getenv('REDDIT_USER_AGENT')
+    }
+    
+    print("🤖 Reddit API Configuration:")
+    reddit_configured = False
+    for secret_name, secret_value in reddit_secrets.items():
+        if secret_value and secret_value.strip():
+            if 'SECRET' in secret_name:
+                print(f"✅ {secret_name}: Found (***)")
+            else:
+                print(f"✅ {secret_name}: {secret_value}")
+            reddit_configured = True
+        else:
+            print(f"❌ {secret_name}: Not found")
+    
+    if not reddit_configured:
+        print("💡 Reddit API not configured - will use RSS feeds (still works!)")
+        print("🔗 Optional setup: https://www.reddit.com/prefs/apps")
+    
+    print()
+    
     # Recommendations
     if resend_key:
         print("🎉 Resend API configured! Email delivery should work.")

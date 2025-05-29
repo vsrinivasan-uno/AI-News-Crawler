@@ -1,20 +1,29 @@
 # AI News Crawler - Environment Configuration
 # Copy this file to .env and fill in your actual values
 
-# ================================
-# EMAIL CONFIGURATION (Choose One)
-# ================================
+# =====================================
+# AI News Crawler Environment Variables
+# =====================================
 
-# Option 1: Resend API (Recommended)
-# Sign up at https://resend.com and get your API key
-RESEND_API_KEY=your_resend_api_key_here
+# RESEND EMAIL SERVICE (RECOMMENDED - FREE TIER)
+# Get your API key from: https://resend.com/api-keys
+RESEND_API_KEY=re_xxxxxxxxxxxxxxxx
 
-# Option 2: SMTP Configuration (Fallback)
-# Use these if you don't have Resend API key
-EMAIL_USER=your_email@gmail.com
-EMAIL_PASSWORD=your_app_password_here
+# TRADITIONAL SMTP (FALLBACK)
+# Example for Gmail: 
+# 1. Enable 2-factor authentication
+# 2. Generate app password: https://myaccount.google.com/apppasswords
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASSWORD=your-app-password
 SMTP_SERVER=smtp.gmail.com
 SMTP_PORT=587
+
+# REDDIT API (OPTIONAL - FOR BETTER REDDIT DATA)
+# Get free credentials from: https://www.reddit.com/prefs/apps
+# Create a "script" type app
+REDDIT_CLIENT_ID=your_14_character_client_id
+REDDIT_CLIENT_SECRET=your_client_secret_key  
+REDDIT_USER_AGENT=AI News Crawler v2.0 by /u/YourRedditUsername
 
 # ================================
 # OPTIONAL CONFIGURATIONS
@@ -43,3 +52,12 @@ DATABASE_PATH=ai_news_crawler.db
 # 1. Sign up at resend.com
 # 2. Verify your domain (or use their test domain)
 # 3. Get your API key from the dashboard 
+
+# =====================================
+# Usage Instructions:
+# =====================================
+# 1. Copy this file to .env
+# 2. Fill in your actual values
+# 3. Either use Resend OR SMTP (Resend recommended)
+# 4. Reddit API is optional - RSS fallback works without it
+# 5. Run: python main.py 

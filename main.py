@@ -446,9 +446,42 @@ class ScraperService:
         return list(set(found_tags))
     
     def scrape_reddit(self) -> List[NewsItem]:
-        """Scrape AI-related posts from Reddit"""
-        logger.info("Starting Reddit scraping...")
+        """Scrape AI-related posts from Reddit using official API"""
+        logger.info("Starting Reddit scraping via official API...")
         results = []
+        
+        try:
+            import praw
+            
+            # Initialize Reddit API client (read-only, no authentication needed)
+            reddit = praw.Reddit(
+                client_id="your_client_id",  # Will be set via environment variable
+                client_secret="your_client_secret",  # Will be set via environment variable  
+                user_agent="AI News Crawler v2.0 by /u/YourUsername"
+            )
+            
+            # If no API credentials, try anonymous/public access
+            reddit_client_id = os.getenv('REDDIT_CLIENT_ID')
+            reddit_client_secret = os.getenv('REDDIT_CLIENT_SECRET')
+            reddit_user_agent = os.getenv('REDDIT_USER_AGENT', 'AI News Crawler v2.0')
+            
+            if reddit_client_id and reddit_client_secret:
+                logger.info("Using Reddit API with credentials")
+                reddit = praw.Reddit(
+                    client_id=reddit_client_id,
+                    client_secret=reddit_client_secret,
+                    user_agent=reddit_user_agent
+                )
+            else:
+                logger.info("Reddit API credentials not found, falling back to RSS feeds")
+                return self.scrape_reddit_rss()
+            
+        except ImportError:
+            logger.warning("PRAW not available, falling back to RSS feeds")
+            return self.scrape_reddit_rss()
+        except Exception as e:
+            logger.error(f"Reddit API initialization failed: {e}, falling back to RSS feeds")
+            return self.scrape_reddit_rss()
         
         subreddits = [
             {'name': 'artificial', 'category': 'general', 'min_score': 100},
@@ -466,62 +499,126 @@ class ScraperService:
         
         for subreddit in subreddits:
             try:
-                logger.info(f"Scraping r/{subreddit['name']}...")
-                url = f"https://www.reddit.com/r/{subreddit['name']}/hot.json"
+                logger.info(f"Scraping r/{subreddit['name']} via API...")
                 
-                # Add rate limiting to avoid being blocked
-                time.sleep(1)  # Wait 1 second between requests
+                sub = reddit.subreddit(subreddit['name'])
+                posts = []
                 
-                response = self.session.get(url, timeout=10)
-                response.raise_for_status()
-                data = response.json()
-                
-                if 'data' in data and 'children' in data['data']:
-                    posts = []
-                    for post in data['data']['children']:
-                        post_data = post['data']
-                        
-                        created_utc = post_data.get('created_utc', 0)
-                        score = post_data.get('score', 0)
-                        comments = post_data.get('num_comments', 0)
-                        
-                        if (self.is_from_today_unix(created_utc) and 
-                            score > subreddit['min_score'] and
-                            self.is_significant_content(post_data.get('title', ''), post_data.get('selftext', ''))):
+                # Get hot posts from the subreddit
+                for submission in sub.hot(limit=25):
+                    try:
+                        # Check if post is from the last 24 hours
+                        if self.is_from_today_unix(submission.created_utc):
+                            score = submission.score
+                            comments = submission.num_comments
                             
-                            news_item = NewsItem(
-                                title=post_data.get('title', ''),
-                                content=post_data.get('selftext', ''),
-                                link=f"https://reddit.com{post_data.get('permalink', '')}",
-                                source=f"Reddit - r/{subreddit['name']}",
-                                date=datetime.fromtimestamp(created_utc, timezone.utc).isoformat(),
-                                score=score,
-                                comments=comments,
-                                author=post_data.get('author', ''),
-                                category=subreddit['category'],
-                                type='reddit_post',
-                                engagement=score + (comments * 2),
-                                is_trending=True,
-                                tags=self.extract_tags(post_data.get('title', '') + ' ' + post_data.get('selftext', ''))
-                            )
-                            posts.append(news_item)
-                    
-                    results.extend(posts)
-                    logger.info(f"Found {len(posts)} significant posts from today in r/{subreddit['name']}")
-                    
-            except requests.exceptions.HTTPError as e:
-                if e.response.status_code == 403:
-                    logger.warning(f"Reddit blocked access to r/{subreddit['name']} (403). This is common and not critical.")
-                else:
-                    logger.error(f"HTTP error scraping r/{subreddit['name']}: {e}")
-            except requests.exceptions.RequestException as e:
-                logger.error(f"Network error scraping r/{subreddit['name']}: {e}")
+                            # Apply minimum score filter
+                            if (score >= subreddit['min_score'] and 
+                                self.is_significant_content(submission.title, submission.selftext)):
+                                
+                                news_item = NewsItem(
+                                    title=submission.title,
+                                    content=submission.selftext or f"Discussion about: {submission.title}",
+                                    link=f"https://reddit.com{submission.permalink}",
+                                    source=f"Reddit - r/{subreddit['name']}",
+                                    date=datetime.fromtimestamp(submission.created_utc, timezone.utc).isoformat(),
+                                    score=score,
+                                    comments=comments,
+                                    author=str(submission.author) if submission.author else '[deleted]',
+                                    category=subreddit['category'],
+                                    type='reddit_post',
+                                    engagement=score + (comments * 2),
+                                    is_trending=True,
+                                    tags=self.extract_tags(submission.title + ' ' + (submission.selftext or ''))
+                                )
+                                posts.append(news_item)
+                                
+                    except Exception as e:
+                        logger.debug(f"Error processing Reddit post: {e}")
+                        continue
+                
+                results.extend(posts)
+                logger.info(f"Found {len(posts)} significant posts from today in r/{subreddit['name']}")
+                
+                # Rate limiting
+                time.sleep(0.5)  # 0.5 seconds between subreddit requests
+                
             except Exception as e:
-                logger.error(f"Unexpected error scraping r/{subreddit['name']}: {e}")
+                logger.warning(f"Error accessing r/{subreddit['name']}: {e}")
+                continue
         
         # Sort by engagement and return top 15
         results.sort(key=lambda x: x.engagement, reverse=True)
+        logger.info(f"Total Reddit posts found: {len(results)}")
         return results[:15]
+    
+    def scrape_reddit_rss(self) -> List[NewsItem]:
+        """Fallback method using Reddit RSS feeds (100% free, no API needed)"""
+        logger.info("Using Reddit RSS feeds (no authentication required)")
+        results = []
+        
+        # Use RSS feeds which are publicly available
+        subreddit_feeds = [
+            {'name': 'artificial', 'category': 'general', 'min_score': 50},
+            {'name': 'MachineLearning', 'category': 'research', 'min_score': 25},
+            {'name': 'OpenAI', 'category': 'companies', 'min_score': 25},
+            {'name': 'ChatGPT', 'category': 'applications', 'min_score': 50},
+            {'name': 'LocalLLaMA', 'category': 'development', 'min_score': 15}
+        ]
+        
+        for subreddit in subreddit_feeds:
+            try:
+                logger.info(f"Scraping r/{subreddit['name']} RSS feed...")
+                
+                # Reddit RSS feeds
+                rss_url = f"https://www.reddit.com/r/{subreddit['name']}/hot.rss"
+                
+                import feedparser
+                feed = feedparser.parse(rss_url)
+                posts = []
+                
+                for entry in feed.entries:
+                    try:
+                        # Parse publication date
+                        published = getattr(entry, 'published_parsed', None)
+                        if published:
+                            pub_date = datetime(*published[:6], tzinfo=timezone.utc)
+                            
+                            # Check if post is from last 24 hours
+                            if self.is_from_today(pub_date.isoformat()):
+                                title = entry.title
+                                description = getattr(entry, 'description', '') or getattr(entry, 'summary', '')
+                                
+                                if self.is_significant_content(title, description):
+                                    news_item = NewsItem(
+                                        title=title,
+                                        content=description,
+                                        link=entry.link,
+                                        source=f"Reddit - r/{subreddit['name']}",
+                                        date=pub_date.isoformat(),
+                                        author=getattr(entry, 'author', 'reddit'),
+                                        category=subreddit['category'],
+                                        type='reddit_post',
+                                        tags=self.extract_tags(title + ' ' + description)
+                                    )
+                                    posts.append(news_item)
+                                    
+                    except Exception as e:
+                        logger.debug(f"Error parsing RSS entry: {e}")
+                        continue
+                
+                results.extend(posts)
+                logger.info(f"Found {len(posts)} posts from r/{subreddit['name']} RSS")
+                
+                # Rate limiting
+                time.sleep(1)
+                
+            except Exception as e:
+                logger.warning(f"Error accessing r/{subreddit['name']} RSS: {e}")
+                continue
+        
+        logger.info(f"Total Reddit RSS posts: {len(results)}")
+        return results[:10]  # Return top 10
     
     def scrape_research_papers(self) -> List[NewsItem]:
         """Scrape recent AI research papers from arXiv"""
