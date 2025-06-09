@@ -31,23 +31,27 @@ Go to your GitHub repository → **Settings** → **Secrets and variables** → 
 
 #### Required Secrets:
 
-1. **`RESEND_API_KEY`** (Primary email service)
+1. **`EMAIL_PROVIDER`** (Optional - defaults to 'google')
+   - Value: `google` or `resend`
+   - Chooses primary email service
+
+2. **`RESEND_API_KEY`** (Primary email service)
    - Value: Your Resend API key from [resend.com](https://resend.com)
    - Example: `re_123abc456def789ghi`
 
 #### Optional Secrets (SMTP Fallback):
 
-2. **`EMAIL_USER`**
+3. **`EMAIL_USER`**
    - Value: Your Gmail address (e.g., `youremail@gmail.com`)
 
-3. **`EMAIL_PASSWORD`** 
+4. **`EMAIL_PASSWORD`** 
    - Value: Your Gmail App Password (not regular password)
    - [How to create App Password](https://support.google.com/accounts/answer/185833)
 
-4. **`SMTP_SERVER`**
+5. **`SMTP_SERVER`**
    - Value: `smtp.gmail.com` (or your SMTP server)
 
-5. **`SMTP_PORT`**
+6. **`SMTP_PORT`**
    - Value: `587`
 
 ### 3. Test the Workflow

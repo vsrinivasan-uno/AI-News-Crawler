@@ -16,6 +16,17 @@ def check_secrets():
     print(f"Environment: {'🤖 GitHub Actions' if is_github_actions else '💻 Local Development'}")
     print()
     
+    # Check email provider selection
+    email_provider = os.getenv('EMAIL_PROVIDER', 'google').lower()
+    print(f"🔧 Email Provider Selection:")
+    print(f"   📧 EMAIL_PROVIDER: {email_provider}")
+    
+    if email_provider not in ['google', 'resend']:
+        print(f"   ⚠️ Warning: Unknown provider '{email_provider}'. Using 'google' as default.")
+        email_provider = 'google'
+    
+    print()
+    
     # Check for Resend API Key
     resend_key = os.getenv('RESEND_API_KEY')
     if resend_key:
@@ -75,18 +86,37 @@ def check_secrets():
     print()
     
     # Recommendations
-    if resend_key:
-        print("🎉 Resend API configured! Email delivery should work.")
-    elif any(smtp_secrets.values()):
-        missing_smtp = [k for k, v in smtp_secrets.items() if not v or not v.strip()]
-        if missing_smtp:
-            print(f"⚠️  SMTP partially configured. Missing: {', '.join(missing_smtp)}")
+    if email_provider == 'google':
+        if any([smtp_secrets['EMAIL_USER'], smtp_secrets['EMAIL_PASSWORD']]):
+            missing_smtp = [k for k, v in smtp_secrets.items() if not v or not v.strip()]
+            if missing_smtp:
+                print(f"⚠️  Google (SMTP) partially configured. Missing: {', '.join(missing_smtp)}")
+            else:
+                print("✅ Google (SMTP) fully configured! Primary email provider ready.")
+                if resend_key:
+                    print("✅ Resend also configured as fallback.")
         else:
-            print("✅ SMTP fully configured! Email delivery should work.")
-    else:
-        print("❌ No email configuration found!")
-        print("   🎯 RECOMMENDED: Add RESEND_API_KEY secret")
-        print("   🔧 ALTERNATIVE: Add EMAIL_USER + EMAIL_PASSWORD secrets")
+            print("❌ Google selected but SMTP not configured!")
+            print("   🎯 Add EMAIL_USER + EMAIL_PASSWORD secrets for Gmail")
+            if resend_key:
+                print("   ✅ Resend available as fallback")
+            else:
+                print("   🔧 Or add RESEND_API_KEY as fallback")
+                
+    elif email_provider == 'resend':
+        if resend_key:
+            print("✅ Resend API configured! Primary email provider ready.")
+            smtp_configured = all([smtp_secrets['EMAIL_USER'], smtp_secrets['EMAIL_PASSWORD']])
+            if smtp_configured:
+                print("✅ SMTP also configured as fallback.")
+        else:
+            print("❌ Resend selected but API key not configured!")
+            print("   🎯 Add RESEND_API_KEY secret")
+            smtp_configured = all([smtp_secrets['EMAIL_USER'], smtp_secrets['EMAIL_PASSWORD']])
+            if smtp_configured:
+                print("   ✅ SMTP available as fallback")
+            else:
+                print("   🔧 Or add EMAIL_USER + EMAIL_PASSWORD as fallback")
     
     print()
     print("🚀 Next: Run the workflow to test email delivery!")

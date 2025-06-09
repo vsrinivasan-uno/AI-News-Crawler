@@ -5,14 +5,22 @@
 # AI News Crawler Environment Variables
 # =====================================
 
-# RESEND EMAIL SERVICE (RECOMMENDED - FREE TIER)
+# EMAIL PROVIDER
+# Choose your primary email provider: 'google' or 'resend'
+# - 'google': Uses Gmail SMTP (requires EMAIL_USER/PASSWORD)
+# - 'resend': Uses Resend API (requires RESEND_API_KEY)
+# If the primary provider fails, it will fall back to the other.
+# Default: 'google' (if not specified)
+EMAIL_PROVIDER=google
+
+# RESEND CONFIGURATION (PRIMARY OR FALLBACK)
 # Get your API key from: https://resend.com/api-keys
 RESEND_API_KEY=re_xxxxxxxxxxxxxxxx
 
-# TRADITIONAL SMTP (FALLBACK)
-# Example for Gmail: 
+# GMAIL/SMTP CONFIGURATION (PRIMARY OR FALLBACK)
+# For Gmail, you need to: 
 # 1. Enable 2-factor authentication
-# 2. Generate app password: https://myaccount.google.com/apppasswords
+# 2. Generate an App Password: https://myaccount.google.com/apppasswords
 EMAIL_USER=your-email@gmail.com
 EMAIL_PASSWORD=your-app-password
 SMTP_SERVER=smtp.gmail.com

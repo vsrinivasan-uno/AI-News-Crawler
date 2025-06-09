@@ -70,37 +70,38 @@ logs/
 *.log
 ai_news_crawler.log
 
-# IDE
+# IDE files
 .idea/
 .vscode/
+.cursor/
 *.swp
 *.swo
 .spyderproject
 .spyproject
 .ropeproject
 
-# OS
+# OS files
 .DS_Store
 Thumbs.db
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
 
-# Database files (keep the actual database but ignore backups)
+# Database files (runtime generated)
+ai_news_crawler.db
+database.sqlite
 *.sqlite.bak
 *.db.bak
-database.sqlite
-
-# AI News Crawler specific
-ai_news_crawler.db
 
 # Selenium
 geckodriver.log
 chromedriver.log
 chromedriver
+selenium-debug.log
 
 # Jupyter Notebook
 .ipynb_checkpoints
-
-# PyCharm
-.idea/
 
 # mypy
 .mypy_cache/
@@ -110,6 +111,25 @@ dmypy.json
 # GitHub Actions - local testing
 act_secrets
 .secrets
+
+# Node.js (legacy - prevent accidental addition)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+package-lock.json
+yarn.lock
+
+# Email attachments (if any)
+attachments/
+temp_files/
+
+# AI News Crawler specific temp files
+temp/
+cache/
+downloads/
 
 # Vercel (legacy)
 .vercel 

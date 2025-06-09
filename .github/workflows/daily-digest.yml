@@ -74,6 +74,7 @@ jobs:
         
     - name: Check email secrets configuration
       env:
+        EMAIL_PROVIDER: ${{ secrets.EMAIL_PROVIDER }}
         RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         EMAIL_USER: ${{ secrets.EMAIL_USER }}
         EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
@@ -87,6 +88,7 @@ jobs:
         
     - name: Run AI News Digest
       env:
+        EMAIL_PROVIDER: ${{ secrets.EMAIL_PROVIDER }}
         RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         EMAIL_USER: ${{ secrets.EMAIL_USER }}
         EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
