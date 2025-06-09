@@ -52,6 +52,7 @@ REDDIT_USER_AGENT=YourApp/1.0 by /u/username
 EMAIL_PROVIDER=resend          # or 'google' (default: 'google')
 SMTP_SERVER=smtp.gmail.com     # (default for Gmail)
 SMTP_PORT=587                  # (default for Gmail)
+EMAIL_SENDER_NAME=Your Org Name # Custom sender name to mask email (default: 'AI-CCORE Research Team')
 ```
 
 ## Testing

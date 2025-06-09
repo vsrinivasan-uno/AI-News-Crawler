@@ -26,6 +26,10 @@ EMAIL_PASSWORD=your-app-password
 SMTP_SERVER=smtp.gmail.com
 SMTP_PORT=587
 
+# Optional: Custom sender name to mask your email address
+# Default: AI-CCORE Research Team
+EMAIL_SENDER_NAME=AI-CCORE Research Team
+
 # REDDIT API (OPTIONAL - FOR BETTER REDDIT DATA)
 # Get free credentials from: https://www.reddit.com/prefs/apps
 # Create a "script" type app

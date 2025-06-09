@@ -85,6 +85,9 @@ class EmailService:
         self.email_user = os.getenv('EMAIL_USER') or None
         self.email_password = os.getenv('EMAIL_PASSWORD') or None
         
+        # Configurable sender name for masking personal email
+        self.sender_name = os.getenv('EMAIL_SENDER_NAME', 'AI-CCORE Research Team').strip()
+        
     def send_email_via_resend(self, to_emails: List[str], subject: str, html_content: str) -> bool:
         """Send email using Resend API"""
         if not self.resend_api_key:
@@ -107,8 +110,9 @@ class EmailService:
             for i in range(0, len(to_emails), batch_size):
                 batch = to_emails[i:i + batch_size]
                 
+                # Use configurable sender name with masked email
                 payload = {
-                    "from": "AI Digest <vp.luke.io@gmail.com>",
+                    "from": f"{self.sender_name} <{self.email_user or 'ai-digest@ai-ccore.org'}>",
                     "to": batch,
                     "subject": subject,
                     "html": html_content
@@ -140,7 +144,8 @@ class EmailService:
         try:
             msg = MIMEMultipart('alternative')
             msg['Subject'] = subject
-            msg['From'] = self.email_user
+            # Use configurable sender name with masked email
+            msg['From'] = f"{self.sender_name} <{self.email_user}>"
             msg['To'] = ', '.join(to_emails)
             
             html_part = MIMEText(html_content, 'html')
