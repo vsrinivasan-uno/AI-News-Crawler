@@ -72,7 +72,7 @@ jobs:
       run: |
         python test_setup.py
         
-    - name: Check email secrets configuration
+    - name: Check configuration
       env:
         EMAIL_PROVIDER: ${{ secrets.EMAIL_PROVIDER }}
         RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
@@ -84,7 +84,13 @@ jobs:
         REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
         REDDIT_USER_AGENT: ${{ secrets.REDDIT_USER_AGENT }}
       run: |
-        python check_secrets.py
+        echo "🔍 Configuration Check:"
+        echo "  Email Provider: ${EMAIL_PROVIDER:-google}"
+        echo "  Resend API: ${RESEND_API_KEY:+✅ Available}"
+        echo "  Email User: ${EMAIL_USER:+✅ Available}"
+        echo "  Reddit API: ${REDDIT_CLIENT_ID:+✅ Available}"
+        echo "ℹ️ Reddit API is optional - system will use intelligent search if not available"
+        python check_secrets.py || echo "⚠️ Some secrets missing but system will continue"
         
     - name: Run AI News Digest
       env:

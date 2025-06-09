@@ -739,6 +739,7 @@ class ScraperService:
             # If Reddit API is available, use it for subreddit search
             if reddit:
                 try:
+                    logger.info("Using Reddit API for subreddit discovery...")
                     # Search for AI-related subreddits using Reddit API
                     ai_keywords = ['artificial', 'machine', 'learning', 'AI', 'neural', 'deep', 'GPT', 'OpenAI', 'ChatGPT', 'LLM']
                     
@@ -912,15 +913,29 @@ class ScraperService:
             
             reddit_client_id = os.getenv('REDDIT_CLIENT_ID', '').strip()
             reddit_client_secret = os.getenv('REDDIT_CLIENT_SECRET', '').strip()
-            reddit_user_agent = os.getenv('REDDIT_USER_AGENT', 'AI News Crawler v3.0').strip()
+            reddit_user_agent_raw = os.getenv('REDDIT_USER_AGENT', '').strip()
+            
+            # Clean and validate user agent
+            if reddit_user_agent_raw:
+                # Remove any invalid characters and normalize
+                reddit_user_agent = re.sub(r'[^\w\s\-\.\:/]', '', reddit_user_agent_raw).strip()
+                reddit_user_agent = re.sub(r'\s+', ' ', reddit_user_agent)  # Normalize spaces
+                if not reddit_user_agent:
+                    reddit_user_agent = 'AI-News-Crawler-v3.0'
+            else:
+                reddit_user_agent = 'AI-News-Crawler-v3.0'
             
             if reddit_client_id and reddit_client_secret:
                 try:
+                    logger.info(f"Attempting Reddit API connection with user agent: '{reddit_user_agent}'")
                     reddit = praw.Reddit(
                         client_id=reddit_client_id,
                         client_secret=reddit_client_secret,
                         user_agent=reddit_user_agent
                     )
+                    
+                    # Test the connection
+                    reddit.user.me()  # This will fail if credentials are invalid
                     
                     # Dynamically discover AI subreddits
                     discovered_subreddits = self.discover_ai_subreddits_dynamically(reddit)
@@ -977,14 +992,15 @@ class ScraperService:
                     return self.scrape_reddit_intelligent()
                     
             else:
-                logger.info("No Reddit API credentials, using intelligent search")
+                logger.info("No Reddit API credentials found, using intelligent search")
+                logger.info("💡 To enable Reddit API: Add REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET, and REDDIT_USER_AGENT to environment")
                 return self.scrape_reddit_intelligent()
             
         except ImportError:
-            logger.info("PRAW not available, using intelligent search")
+            logger.info("PRAW library not available, using intelligent search")
             return self.scrape_reddit_intelligent()
         except Exception as e:
-            logger.error(f"Dynamic Reddit scraping failed: {e}")
+            logger.warning(f"Dynamic Reddit scraping failed, using intelligent search: {e}")
             return self.scrape_reddit_intelligent()
         
         # Sort by engagement and return top results

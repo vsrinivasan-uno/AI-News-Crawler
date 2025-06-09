@@ -32,10 +32,22 @@ EMAIL_PASSWORD=your-app-password
 
 - **Resend API**: Get API key from [resend.com](https://resend.com)
 - **Gmail**: Use App Password (not regular password) - [Guide](https://support.google.com/accounts/answer/185833)
+- **Reddit API**: Get credentials from [reddit.com/prefs/apps](https://reddit.com/prefs/apps) - Optional but enhances Reddit discovery
 - **No Email**: The crawler will run successfully without email credentials and just log the results
+- **No Reddit API**: The crawler will use intelligent search instead of API-based discovery
 
 ## Optional Secrets
 
+### Reddit API (Optional)
+For enhanced Reddit content discovery:
+
+```
+REDDIT_CLIENT_ID=your_client_id
+REDDIT_CLIENT_SECRET=your_client_secret
+REDDIT_USER_AGENT=YourApp/1.0 by /u/username
+```
+
+### Email Configuration (Optional)
 ```
 EMAIL_PROVIDER=resend          # or 'google' (default: 'google')
 SMTP_SERVER=smtp.gmail.com     # (default for Gmail)
