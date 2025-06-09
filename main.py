@@ -1542,9 +1542,11 @@ class EmailListManager:
     def __init__(self):
         self.email_lists = {
             'main': [
-                'vishvaluke@gmail.com',
                 'vsrinivasan@unomaha.edu',
-                'vishvaluke@proton.me'
+                'msubramaniam@unomaha.edu',
+                'apucakayala@unomaha.edu',
+                'vvijayaragunathapa@unomaha.edu',
+                'ikatlakanti@unomaha.edu'
             ],
             'team': [
                 # Add team emails here
