@@ -246,18 +246,10 @@ class EmailService:
                                     <table width="100%" cellpadding="0" cellspacing="0" border="0">
                                         <tr>
                                             <td align="center">
-                                                <!-- Logo -->
-                                                <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto 20px auto;">
-                                                    <tr>
-                                                        <td style="background-color: #1e40af; padding: 15px; border-radius: 12px;">
-                                                            <span style="color: #ffffff; font-size: 24px;">🤖</span>
-                                                        </td>
-                                                    </tr>
-                                                </table>
                                                 
                                                 <!-- Title -->
                                                 <h1 style="margin: 0 0 10px 0; color: #ffffff; font-size: 28px; font-weight: bold;">
-                                                    AI-CCORE's Daily AI Digest
+                                                    💡 AI-CCORE's Daily AI Digest
                                                 </h1>
                                                 
                                                 <!-- Subtitle -->
