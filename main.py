@@ -1658,7 +1658,18 @@ def send_daily_digest():
         # Get email list
         email_list = email_manager.get_active_email_list()
         
-        if not email_list:
+        # Check if we have any email configuration
+        if not email_service.resend_api_key and not email_service.smtp_user:
+            logger.warning("⚠️ No email configuration found - digest will be logged only")
+            logger.info("💡 Add RESEND_API_KEY or EMAIL_USER/EMAIL_PASSWORD to environment for email delivery")
+            error_message = "No email credentials configured"
+            
+            # Still format the email for logging purposes
+            subject = email_manager.config.get('custom_subject') or "AI-CCORE's Daily AI Digest"
+            html_content = email_service.format_digest_email(results)
+            logger.info(f"📄 Email content generated successfully ({len(html_content)} characters)")
+            
+        elif not email_list:
             logger.warning("⚠️ No email addresses found in active email list")
             error_message = "No email addresses configured"
         else:
