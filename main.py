@@ -732,6 +732,15 @@ class ScraperService:
             if reddit:
                 try:
                     logger.info("Using Reddit API for subreddit discovery...")
+                    # Verify Reddit instance is working before using it
+                    try:
+                        _ = list(reddit.subreddit('python').hot(limit=1))
+                    except Exception as e:
+                        logger.warning(f"Reddit API verification failed: {str(e)[:100]}")
+                        logger.info("Using web-based subreddit discovery as fallback...")
+                        # Skip to web-based fallback
+                        raise Exception("Reddit API not working")
+                    
                     # Search for AI-related subreddits using Reddit API
                     ai_keywords = ['artificial', 'machine', 'learning', 'AI', 'neural', 'deep', 'GPT', 'OpenAI', 'ChatGPT', 'LLM']
                     
@@ -917,7 +926,8 @@ class ScraperService:
             else:
                 reddit_user_agent = 'AI-News-Crawler-v3.0'
             
-            if reddit_client_id and reddit_client_secret:
+            # Validate credentials before creating Reddit instance
+            if reddit_client_id and reddit_client_secret and len(reddit_client_id) > 5 and len(reddit_client_secret) > 5:
                 try:
                     logger.info(f"Attempting Reddit API connection with user agent: '{reddit_user_agent}'")
                     reddit = praw.Reddit(
@@ -926,10 +936,18 @@ class ScraperService:
                         user_agent=reddit_user_agent
                     )
                     
-                    # Test the connection
-                    reddit.user.me()  # This will fail if credentials are invalid
+                    # Test the connection first - this will throw an exception if invalid
+                    try:
+                        # Try a more comprehensive API call to verify credentials
+                        test_sub = reddit.subreddit('python')
+                        _ = list(test_sub.hot(limit=1))  # This will fail if credentials are invalid
+                        logger.info("✅ Reddit API authentication successful")
+                    except Exception as auth_error:
+                        logger.warning(f"❌ Reddit API authentication failed: {str(auth_error)[:100]}")
+                        logger.info("Falling back to intelligent search without Reddit API")
+                        return self.scrape_reddit_intelligent()
                     
-                    # Dynamically discover AI subreddits
+                    # Only proceed with discovery if authentication succeeded
                     discovered_subreddits = self.discover_ai_subreddits_dynamically(reddit)
                     
                     for subreddit_info in discovered_subreddits:
@@ -984,8 +1002,11 @@ class ScraperService:
                     return self.scrape_reddit_intelligent()
                     
             else:
-                logger.info("No Reddit API credentials found, using intelligent search")
-                logger.info("💡 To enable Reddit API: Add REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET, and REDDIT_USER_AGENT to environment")
+                logger.info("No valid Reddit API credentials found, using intelligent search")
+                if not reddit_client_id or not reddit_client_secret:
+                    logger.info("💡 To enable Reddit API: Add REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET, and REDDIT_USER_AGENT to environment")
+                else:
+                    logger.info("💡 Reddit credentials too short - ensure they are valid")
                 return self.scrape_reddit_intelligent()
             
         except ImportError:
